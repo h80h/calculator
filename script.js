@@ -5,20 +5,21 @@ function Calculator() {
     "*": (a, b) => a * b,
     "/": (a, b) => a / b,
   };
-  this.calculate = (a, op, b) => {
+  this.calculate = (operation) => {
+    let splited = operation.split(" ");
+    let op = splited[1];
+    let a = +splited[0];
+    let b = +splited[2];
     return this.methods[op](a, b);
   };
 }
 
-const display = document.querySelector(".display");
-// const displayArr = display.texContent.split("");
-const displayContent = display.textContent;
-const displayArr = displayContent.split("");
-const ops = "+-*/"
-const opIndex = displayArr.findIndex((char) => ops.includes(char));
-const op = displayArr[opIndex];
-const a = displayArr.slice(0, opIndex).join("");
-const b = displayArr.slice(opIndex + 1).join("");
-console.log(`a:${a}, op:${op}, b:${b}`);
-
-
+const powerCalc = new Calculator;
+const last = document.querySelector(".last");
+// const lastArr = last.texContent.split("");
+const lastContent = last.textContent;
+const operate = document.querySelector(".equal");
+const curr = document.querySelector(".curr");
+operate.addEventListener("click", () => {
+  return curr.textContent = powerCalc.calculate(lastContent);
+})
