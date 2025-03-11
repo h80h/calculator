@@ -13,12 +13,11 @@ body {
 }
 
 .curr {
-  font-size: 48px;
+  font-size: 36px;
   height: 48px;
-  margin-bottom: 5px;
 }
 
 button {
-  font-size: 36px;
+  font-size: 32px;
   width: 40px;
 }
