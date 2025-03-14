@@ -21,10 +21,15 @@ function Calculator() {
         let exponen = (+(result)).toExponential();
         console.log(`exponen = ${exponen}`);
         let exponenStr = exponen.toString();
-        let eIndex = exponenStr.indexOf("e");
-        let a = 9 - (exponenStr.length-eIndex) + 1;
+        if(exponenStr.length >9){
+          let eIndex = exponenStr.indexOf("e");
+          let a = 9 - (exponenStr.length-eIndex) + 1;
+
+          return (+exponen.slice(0, a)).toFixed(a - 3) + exponen.slice(eIndex);
+        } else {
+          return exponen;
+        }
         
-        return (+exponen.slice(0, a)).toFixed(a - 3) + exponen.slice(eIndex);
       } else if(decimalIndex != "-1"){
         return (+result).toFixed(8-decimalIndex)
       } else {
