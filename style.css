@@ -9,12 +9,29 @@ body {
 }
 
 .last {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .curr {
   font-size: 36px;
-  height: 48px;
+}
+
+.display-item {
+  text-align: right;
+  flex: 1;
+}
+
+.display {
+  display: flex;
+  flex-direction: column;
+  vertical-align: bottom;
+  min-width: 0; /* Allows the item to shrink */
+  width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  align-items: flex-end;
+  margin-bottom: 5px;
 }
 
 button {

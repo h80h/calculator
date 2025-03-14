@@ -21,9 +21,9 @@ function Calculator() {
         let exponen = (+(result)).toExponential();
         console.log(`exponen = ${exponen}`);
         let exponenStr = exponen.toString();
-        if(exponenStr.length >9){
+        if(exponenStr.length > 9){
           let eIndex = exponenStr.indexOf("e");
-          let a = 9 - (exponenStr.length-eIndex) + 1;
+          let a = 9 - (exponenStr.length - eIndex) + 1;
 
           return (+exponen.slice(0, a)).toFixed(a - 3) + exponen.slice(eIndex);
         } else {
@@ -65,6 +65,7 @@ operands.addEventListener("click", (e) => {
     if(ops.includes(e.target.id)){
       if(newCount > 0) newCount --;
       if(decimalCount < 1) decimalCount ++;
+      last.setAttribute("style", "font-size: 20px")
       if(!curr.textContent.includes(" ")){
         switch(e.target.id) {
           case "add":
@@ -109,12 +110,42 @@ operands.addEventListener("click", (e) => {
       curr.textContent += e.target.id;
       }
     }
+    if(curr.textContent.includes(".")){
+      switch(curr.textContent.length){
+        case 10:
+          curr.setAttribute("style", "font-size: 32px");
+          break;
+        case 11:
+          curr.setAttribute("style", "font-size: 30px");
+          break;
+        case 12:
+          curr.setAttribute("style", "font-size: 28px");
+          break;
+      }
+    } else {
+      switch(curr.textContent.length){
+        case 9:
+          curr.setAttribute("style", "font-size: 32px");
+          break;
+        case 10:
+          curr.setAttribute("style", "font-size: 30px");
+          break;
+        case 11:
+          curr.setAttribute("style", "font-size: 28px");
+          break;
+      }
+    }
   }
 })
 
 operate.addEventListener("click", () => {
   if(!(curr.textContent.slice(-1) === " ") && curr.textContent.includes(" ")){
     last.textContent = curr.textContent;
+    if(last.textContent.length > 15){
+      last.setAttribute("style", "font-size: 16px")
+    };
+
+    curr.setAttribute("style", "font-size: 36px");
     newCount ++;
     if(decimalCount < 1) decimalCount++;
     return curr.textContent = powerCalc.calculate(curr.textContent);
