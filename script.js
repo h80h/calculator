@@ -1,3 +1,8 @@
+let result = "";
+let decimalCount = 1;
+let newCount = 0;
+let reuseCount = 0;
+
 function Calculator() {
   this.methods = {
     "+": (a, b) => a + b,
@@ -8,11 +13,26 @@ function Calculator() {
   this.calculate = (operation) => {
     let splited = operation.split(" ");
     let op = splited[1];
-    let a = +splited[0];
-    let b = +splited[2];
+    let a = splited[0];
+    console.log(`reuseCount = ${reuseCount}`);
+    if(reuseCount === 1){
+      a = result;
+      console.log("reuse");
+    };
+    console.log(`a = ${a}`);
+    let b = splited[2];
+
+    last.textContent = a + " " + op + " " + b;
     
-    let result = (this.methods[op](a, b)).toFixed(8);
+    result = (this.methods[op](+a, +b)).toFixed(8);
+    while(result.slice(-1) === "0"){
+      result = result.slice(0, -1);
+    }
+    if(result.slice(-1) === "."){
+      result = result.slice(0, -1);
+    }
     console.log(`result = ${result}`);
+
     let rounded = round(result);
 
     function round(){
@@ -36,15 +56,19 @@ function Calculator() {
         return result;
       }
     }
+    if(!rounded.includes("e")){
+      while(rounded.slice(-1) === "0"){
+        rounded = rounded.slice(0, -1);
+      }
+      if(rounded.slice(-1) === "."){
+        rounded = rounded.slice(0, -1);
+      }
+    }
 
-    while(rounded.slice(-1) === "0"){
-      rounded = rounded.slice(0, -1);
-    }
-    if(rounded.slice(-1) === "."){
-      rounded = rounded.slice(0, -1);
-    }
+    reuseCount = 0;
 
     return rounded;
+    
   };
 }
 
@@ -54,16 +78,17 @@ const operands = document.querySelector(".operands");
 const operate = document.querySelector("#operate");
 const curr = document.querySelector(".curr");
 const ops = ["add", "subtract", "multiply", "divide", "operate"];
-let decimalCount = 1;
-let newCount = 0;
 
 operands.addEventListener("click", (e) => {
   console.log(`newCount = ${newCount}`);
-  console.log(`decimalCount = ${decimalCount}`)
+  console.log(`decimalCount = ${decimalCount}`);
   if(e.target.id !== "operate"){
     if(newCount > 0) last.textContent = "";
     if(ops.includes(e.target.id)){
-      if(newCount > 0) newCount --;
+      if(newCount > 0) {
+        reuseCount = 1;
+        newCount --;
+      }
       if(decimalCount < 1) decimalCount ++;
       last.setAttribute("style", "font-size: 20px")
       if(!curr.textContent.includes(" ")){
@@ -99,6 +124,9 @@ operands.addEventListener("click", (e) => {
         ;
       } else {
         curr.textContent = e.target.id;
+        if(newCount > 0){
+          newCount --;
+        }
       }
     } else {
       if(newCount > 0){
@@ -140,7 +168,7 @@ operands.addEventListener("click", (e) => {
 
 operate.addEventListener("click", () => {
   if(!(curr.textContent.slice(-1) === " ") && curr.textContent.includes(" ")){
-    last.textContent = curr.textContent;
+    
     if(last.textContent.length > 15){
       last.setAttribute("style", "font-size: 16px")
     };
