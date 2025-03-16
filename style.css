@@ -5,28 +5,36 @@ body {
   align-items: center;
   justify-content: center;
   font-family: Arial, Helvetica, sans-serif;
-  margin-top: -100px;
+  margin-top: -70px;
 }
 
 .last {
   font-size: 20px;
 }
 
+.last-box {
+  height: 30px;
+}
+
 .curr {
   font-size: 36px;
 }
 
+.curr-box {
+  height: 40px;
+}
+
 .display-item {
-  text-align: right;
-  flex: 1;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
 }
 
 .display {
   display: flex;
   flex-direction: column;
-  vertical-align: bottom;
   min-width: 0; /* Allows the item to shrink */
-  width: 170px;
+  width: 172px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -37,4 +45,12 @@ body {
 button {
   font-size: 32px;
   width: 40px;
+  height: 42px;
+}
+
+#reset,
+#backward {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  padding: 0;
+  font-size: 30px;
 }
