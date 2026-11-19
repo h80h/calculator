@@ -37,14 +37,32 @@ body {
   filter: grayscale(0.1);
 }
 
+/* display */
+
 #display {
   height: 60px;
   border-radius: 5px;
   background: #efefef;
   margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  
   box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.2),
     inset 0 -1px 3px rgba(255, 255, 255, 0.15),
     0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+#history {
+  flex: 1;
+  padding: 3px 5px 0 0;
+  font-size: 18px;
+}
+
+#real-time {
+  flex: 1.3;
+  padding-right: 5px;
+  font-size: 32px;
 }
 
 /* buttons */
