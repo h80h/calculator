@@ -61,17 +61,13 @@ function startCalculator() {
       }
 
       if (!operator) {
-        if (numOne === "0") {
-          numOne = btn.textContent;
-        } else {
-          numOne += btn.textContent;
-        }
+        numOne === "0"
+          ? (numOne = btn.textContent)
+          : (numOne += btn.textContent);
       } else {
-        if (numTwo === "0") {
-          numTwo = btn.textContent;
-        } else {
-          numTwo += btn.textContent;
-        }
+        numTwo === "0"
+          ? (numTwo = btn.textContent)
+          : (numTwo += btn.textContent);
       }
     } else {
       // If lastResult exists
