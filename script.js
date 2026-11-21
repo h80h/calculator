@@ -85,14 +85,19 @@ function startCalculator() {
       } else if (!numTwo) {
         operator = btn.textContent;
       } else {
-        // nextOperator = btn.textContent;
+        // Auto operate if user enters extra operator when numTwo exists
+        const nextOperator = btn.textContent;
+        lastResult = operate(numOne, numTwo, operator);
+        console.log("triggered by extra operator:\n" + `${numOne} ${operator} ${numTwo}`);
+        historyDisplay.textContent = `${numOne} ${operator} ${numTwo}`;
+        // start a new operation with lastResult as numOne, nextOperator as operator
+        numOne = lastResult;
+        operator = nextOperator;
+        lastResult = "";
+        numTwo = "";
       }
     }
 
-    // console.log(`lastResult: ${lastResult}`);
-    // console.log(`numOne: ${numOne}`);
-    // console.log(`numTwo: ${numTwo}`);
-    // console.log(`operator: ${operator}`);
     realTimeDisplay.textContent = `${numOne} ${operator} ${numTwo}`;
   });
 
@@ -106,8 +111,8 @@ function startCalculator() {
     // numOne absolutely exists
     if (!numTwo) return;
     lastResult = operate(numOne, numTwo, operator);
+    console.log("triggered by user:\n"+`${numOne} ${operator} ${numTwo}`);
     realTimeDisplay.textContent = lastResult;
-    console.log(`operation result: ${lastResult}`);
     historyDisplay.textContent = `${numOne} ${operator} ${numTwo}`;
     // start a new operation with lastResult as numOne
     numOne = lastResult;
@@ -124,16 +129,8 @@ function startCalculator() {
 
 startCalculator();
 
-// ** This calculator should not evaluate more than a single pair of numbers at a time
-  // Enter a number (12).
-  // Enter an operator (+).
-  // Enter a second number (7).
-  // Enter a second operator (-). At this point, it should evaluate the initial pair of numbers (12 + 7), then display the result (19).
-  // Enter another number (1).
-  // Enter another operator or equals sign (=). At this point, it should use the previous result (19) as the first number, the operator (-), and the new number (1) to calculate the new equation 19 - 1. You should see the result (18) on the display.
-  // round answers with long decimals so that they don’t overflow the display
-  // Pressing = before entering all of the numbers or an operator could cause problems!
-
+// round answers with long decimals so that they don’t overflow the display
+// Pressing = before entering all of the numbers or an operator could cause problems!
 // Display a snarky error message if the user tries to divide by 0… and don’t let it crash your calculator!
 
 // Extra credit
