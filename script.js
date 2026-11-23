@@ -65,7 +65,7 @@ function operate(numOne, numTwo, operator) {
       }
       output = roundedResult + `e${eTimes}`;
     } else if (lengthOfInt === 1) {
-        output = roundNum(result, 9);
+      output = roundNum(result, 9);
     } else if (lengthOfInt > 10) {
       // Round the result into an e notation
       output =
@@ -106,7 +106,6 @@ function startCalculator() {
   }
 
   // Let user input operation which is formed by numOne, numTwo and operator
-  // ** Don't let user enter more than one decimal separator for a num
   outerBtnsContainer.addEventListener("click", (e) => {
     if (
       e.target === outerBtnsContainer ||
@@ -128,15 +127,19 @@ function startCalculator() {
       }
 
       if (!operator) {
-        numOne === "0" && btnText !== "."
-          ? (numOne = btnText)
-          : (numOne += btnText);
+        if (!(numOne.includes(".")) || btnText !== ".") {
+          numOne === "0" && btnText !== "."
+            ? (numOne = btnText)
+            : (numOne += btnText);
+        }
       } else {
-        numTwo === "0" && btnText !== "."
-          ? (numTwo = btnText)
-          : numTwo === "" && btnText === "."
-            ? (numTwo = "0.")
-            : (numTwo += btnText);
+        if (!(numTwo.includes(".")) || btnText !== ".") {
+          numTwo === "0" && btnText !== "."
+            ? (numTwo = btnText)
+            : numTwo === "" && btnText === "."
+              ? (numTwo = "0.")
+              : (numTwo += btnText);
+        }
       }
     } else {
       // If lastResult exists
