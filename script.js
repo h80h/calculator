@@ -9,7 +9,10 @@ function roundNum(num, decimalPlace) {
 
 // Fix position issue of minus sign of negative number with rtl direction
 function moveMinusSign(num) {
-  if (num < 0) {return `${num.slice(1)}-`;}
+  // if (num < 0) {return `${num.slice(1)}-`;}
+  if (num < 0) {
+    return num.slice(1) + "-";
+  }
   return num;
 }
 
@@ -35,6 +38,39 @@ function startCalculator() {
   let lastResult = "";
   // Disable all event handler if isLastResultAnError is true except allClear's click event listener
   let isLastResultAnError = false;
+
+  const realTimeDisplayObj = new Display(realTimeDisplay);
+  const historyDisplayObj = new Display(historyDisplay);
+  realTimeDisplayObj.default = realTimeDisplay.querySelector(".default");
+
+  function Display(part) {
+    this.numOne = part.querySelector(".num-one");
+    this.numTwo = part.querySelector(".num-two");
+    this.operator = part.querySelector(".operator");
+
+    this.updateDisplay = function() {
+      this.numTwo.textContent = moveDecimalPoint(numTwo);
+      this.operator.textContent = moveDecimalPoint(operator);
+      this.numOne.textContent = moveDecimalPoint(numOne);
+    };
+
+    this.clearDisplay = function() {
+      this.operator.textContent = "";
+      this.numOne.textContent = "";
+    };
+
+    this.removeHidden = function(part) {
+      if (this[part].classList[1]) {
+        this[part].classList.remove("hidden");
+      }
+    };
+
+    this.addHidden = function(part) {
+      if (!this[part].classList[1]) {
+        this[part].classList.add("hidden");
+      }
+    }
+  }
 
   function operate(numOne, numTwo, operator) {
     const operation =
@@ -105,7 +141,13 @@ function startCalculator() {
     operator = "";
     lastResult = "";
     isLastResultAnError = false;
-    historyDisplay.textContent = "";
+    realTimeDisplayObj.clearDisplay();
+    realTimeDisplayObj.numTwo.textContent = "";
+    realTimeDisplayObj.addHidden("numTwo");
+    realTimeDisplayObj.addHidden("operator");
+    realTimeDisplayObj.addHidden("numOne");
+    historyDisplayObj.clearDisplay();
+    historyDisplayObj.numTwo.textContent = "";
     console.log("reset!");
   }
 
@@ -119,6 +161,7 @@ function startCalculator() {
       isLastResultAnError
     ) return;
 
+    realTimeDisplayObj.addHidden("default");
     const btn = e.target;
     const btnText = btn.textContent;
 
@@ -128,12 +171,14 @@ function startCalculator() {
       if (lastResult) resetAllVariables();
       if (!operator) {
         if (!numOne.includes(".") || btnText !== ".") {
+          realTimeDisplayObj.removeHidden("numOne");
           numOne === "0" && btnText !== "."
             ? (numOne = btnText)
             : (numOne += btnText);
         }
       } else {
         if (!numTwo.includes(".") || btnText !== ".") {
+        realTimeDisplayObj.removeHidden("numTwo");
           numTwo === "0" && btnText !== "."
             ? (numTwo = btnText)
             : numTwo === "" && btnText === "."
@@ -153,8 +198,13 @@ function startCalculator() {
         lastResult = "";
         numTwo = "";
         operator = btnText;
-        historyDisplay.textContent = "";
+        realTimeDisplayObj.addHidden("numTwo");
+        historyDisplayObj.clearDisplay();
+        historyDisplayObj.numTwo.textContent = "";
       } else if (!numTwo) {
+        realTimeDisplayObj.addHidden("numTwo");
+        realTimeDisplayObj.removeHidden("numOne");
+        realTimeDisplayObj.removeHidden("operator");
         operator = btnText;
       } else {
         // Auto operate if user enters extra operator when numTwo exists
@@ -163,20 +213,23 @@ function startCalculator() {
         console.log(
           "triggered by extra operator:\n" + `${numOne} ${operator} ${numTwo}`,
         );
-        historyDisplay.textContent = `${moveDecimalPoint(numTwo)} ${operator} ${moveDecimalPoint(numOne)}`;
-        if (isLastResultAnError) realTimeDisplay.textContent = "Error";
-        else {
+        historyDisplayObj.updateDisplay();
+        if (isLastResultAnError) {
+          realTimeDisplayObj.clearDisplay();
+          realTimeDisplayObj.numTwo.textContent = "Error";
+        } else {
           // start a new operation with lastResult as numOne, nextOperator as operator
           numOne = lastResult;
           operator = nextOperator;
           lastResult = "";
           numTwo = "";
-          realTimeDisplay.textContent = `${operator} ${moveMinusSign(numOne)}`;
+          realTimeDisplayObj.updateDisplay();
+          realTimeDisplayObj.addHidden("numTwo");
         }
         return;
       }
     }
-    realTimeDisplay.textContent = `${moveDecimalPoint(numTwo)} ${operator} ${moveDecimalPoint(numOne)}`;
+    realTimeDisplayObj.updateDisplay();
   });
 
   // Let user manually trigger the operating
@@ -188,8 +241,9 @@ function startCalculator() {
     if (!numTwo || isLastResultAnError) return;
     lastResult = operate(numOne, numTwo, operator);
     console.log("triggered by user:\n" + `${numOne} ${operator} ${numTwo}`);
-    realTimeDisplay.textContent = moveMinusSign(lastResult);
-    historyDisplay.textContent = `${moveDecimalPoint(numTwo)} ${operator} ${moveDecimalPoint(numOne)}`;
+    realTimeDisplayObj.clearDisplay();
+    realTimeDisplayObj.numTwo.textContent = moveMinusSign(lastResult);
+    historyDisplayObj.updateDisplay();
     // start a new operation with lastResult as numOne
     if (!isLastResultAnError) numOne = lastResult;
   });
@@ -197,7 +251,7 @@ function startCalculator() {
   // Make the whole calculator reset
   allClear.addEventListener("click", () => {
     resetAllVariables();
-    realTimeDisplay.textContent = "0";
+    realTimeDisplayObj.removeHidden("default");
     console.log("Restart from 0");
   });
 }
