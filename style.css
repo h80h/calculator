@@ -74,7 +74,6 @@ body {
   padding: 0 5px 5px 0;
   font-size: 30px;
   gap: 3px;
-  justify-content: flex-start;
 }
 
 #history .operator {
