@@ -7,6 +7,10 @@ body {
   align-items: center;
 }
 
+button svg {
+  pointer-events: none;
+}
+
 #container {
   padding: 0 10px 10px 10px;
   /* define width for child that applying overflow: hidden */
@@ -110,13 +114,15 @@ body {
   gap: 2px;
 }
 
-.btns-container button,
-#operators-container button {
+#outer-btns-container button {
   width: 42px;
   height: 42px;
   padding: 0;
   border: #dddddd 1px solid;
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   color: #999999;
   background: #e3e3e3;
   font-size: 20px;
@@ -125,19 +131,19 @@ body {
     inset 0 -1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.btns-container .large-font-btn {
-  font-family: monospace;
-}
-
-.btns-container button:hover,
-#operators-container button:hover {
+#outer-btns-container button:hover {
   background: #efefef;
 }
 
-.btns-container .small-font-btn {
-  font-size: 17px;
+#operators-container button {
+  font-size: 21px;
 }
 
-.btns-container .large-font-btn {
-  font-size: 22px;
+#outer-btns-container #negation,
+#outer-btns-container #percent {
+  font-size: 18px;
+}
+
+#outer-btns-container #all-clear {
+  font-size: 16px;
 }

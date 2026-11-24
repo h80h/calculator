@@ -187,15 +187,10 @@ function startCalculator() {
   // or may be lastResult of operating triggered by pressing operateSign
   // or may be lastResult of operating triggered by entering an extra operator to an operation
   operatorsContainer.addEventListener("click", (e) => {
-    if (
-      e.target === operatorsContainer ||
-      e.target === operateSign ||
-      isLastResultAnError
-    )
-      return;
+    if (e.target.classList[0] !== "operator" || isLastResultAnError) return;
 
     const btn = e.target;
-    const btnText = btn.textContent;
+    const btnText = btn.id;
 
     // If lastResult exists
     // Reset lastResult and numTwo and then Set operator to be btnText
