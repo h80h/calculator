@@ -129,7 +129,8 @@ body {
   font-family: monospace;
 }
 
-.btns-container button:hover {
+.btns-container button:hover,
+#operators-container button:hover {
   background: #efefef;
 }
 
