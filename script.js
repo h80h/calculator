@@ -8,7 +8,10 @@ function roundNum(num, decimalPlace) {
 }
 
 function startCalculator() {
-  const outerBtnsContainer = document.querySelector("#outer-btns-container");
+  const operandsContainer = document.querySelector(
+    "#outer-btns-container>div:first-child",
+  );
+  const operatorsContainer = document.querySelector("#operators-container");
   const operateSign = document.querySelector("#operate");
   const realTimeDisplay = document.querySelector("#real-time");
   const historyDisplay = document.querySelector("#history");
@@ -30,7 +33,7 @@ function startCalculator() {
 
     this.setText = function (part, content) {
       this[part].textContent = content;
-    }
+    };
 
     this.clearDisplay = function () {
       this.setText("operator", "");
@@ -44,7 +47,7 @@ function startCalculator() {
   realTimeDisplayObj.removeHidden = function (part) {
     if (this[part].classList[1]) {
       this[part].classList.remove("hidden");
-      console.log(`remove hidden from ${part}`)
+      console.log(`remove hidden from ${part}`);
     }
   };
 
@@ -139,83 +142,98 @@ function startCalculator() {
   }
 
   // Let user input operation which is formed by numOne, numTwo and operator
-  outerBtnsContainer.addEventListener("click", (e) => {
+  // Create two event listeners for readability
+  // One for operands, one for operator
+  operandsContainer.addEventListener("click", (e) => {
     if (
-      e.target === outerBtnsContainer ||
+      e.target === operandsContainer ||
       e.target.classList[0] === "btns-container" ||
-      e.target === operateSign ||
       e.target === allClear ||
       isLastResultAnError
-    ) return;
+    )
+      return;
 
     const btn = e.target;
     const btnText = btn.textContent;
 
-    if (btn.classList[0] !== "operator") {
-      // if clicking digit buttons right after operating
-      // start a new operation with all variables being reset
-      if (lastResult) resetAllVariables();
-      if (!operator) {
-        if (!numOne.includes(".") || btnText !== ".") {
-          numOne === "0" && btnText !== "."
-            ? (numOne = btnText)
-            : (numOne += btnText);
-          realTimeDisplayObj.setText("numOne", numOne);
-        }
-      } else {
-        if (!numTwo.includes(".") || btnText !== ".") {
-          numTwo === "0" && btnText !== "."
-            ? (numTwo = btnText)
-            : numTwo === "" && btnText === "."
-              ? (numTwo = "0.")
-              : (numTwo += btnText);
-          realTimeDisplayObj.setText("numTwo", numTwo);
-          realTimeDisplayObj.removeHidden("numTwo");
-        }
+    // if clicking digit buttons right after operating
+    // start a new operation with all variables being reset
+    if (lastResult) resetAllVariables();
+    if (!operator) {
+      if (!numOne.includes(".") || btnText !== ".") {
+        numOne === "0" && btnText !== "."
+          ? (numOne = btnText)
+          : (numOne += btnText);
+        realTimeDisplayObj.setText("numOne", numOne);
       }
     } else {
-      // If lastResult exists
-      // Reset lastResult and numTwo and then Set operator to btnText
-      if (lastResult) {
-        // numOne got set to be lastResult after operating
-        // if select operator without clicking digit button first after operating
-        // start a new operation with lastResult as numOne
-        // and reset the lastResult, numTwo
-        // and Reassign operator according to the clicked .operator
-        lastResult = "";
-        numTwo = "";
-        operator = btnText;
-        historyDisplayObj.clearAllDisplay();
+      if (!numTwo.includes(".") || btnText !== ".") {
+        numTwo === "0" && btnText !== "."
+          ? (numTwo = btnText)
+          : numTwo === "" && btnText === "."
+            ? (numTwo = "0.")
+            : (numTwo += btnText);
+        realTimeDisplayObj.setText("numTwo", numTwo);
+        realTimeDisplayObj.removeHidden("numTwo");
+      }
+    }
+  });
+
+  // Let user choose operator for new operation of which numOne may be entered by user
+  // or may be lastResult of operating triggered by pressing operateSign
+  // or may be lastResult of operating triggered by entering an extra operator to an operation
+  operatorsContainer.addEventListener("click", (e) => {
+    if (
+      e.target === operatorsContainer ||
+      e.target === operateSign ||
+      isLastResultAnError
+    )
+      return;
+
+    const btn = e.target;
+    const btnText = btn.textContent;
+
+    // If lastResult exists
+    // Reset lastResult and numTwo and then Set operator to be btnText
+    if (lastResult) {
+      // numOne got set to be lastResult after operating
+      // if select operator without clicking digit button first after operating
+      // start a new operation with lastResult as numOne
+      // and reset the lastResult, numTwo
+      // and Reassign operator according to the clicked .operator
+      lastResult = "";
+      numTwo = "";
+      operator = btnText;
+      historyDisplayObj.clearAllDisplay();
+    } else if (!numTwo) {
       // this case explains why not to set "0" as numTwo's default value
       // operator should be alterable before user enters numTwo
-      } else if (!numTwo) {
-        operator = btnText;
+      operator = btnText;
+    } else {
+      // Auto operate if user enters extra operator when numTwo exists
+      const nextOperator = btnText;
+      lastResult = operate(numOne, numTwo, operator);
+      console.log(
+        "triggered by extra operator:\n" + `${numOne} ${operator} ${numTwo}`,
+      );
+      historyDisplayObj.updateDisplay();
+      if (isLastResultAnError) {
+        realTimeDisplayObj.clearDisplay();
+        realTimeDisplayObj.hideDisplay();
+        realTimeDisplayObj.setText("numOne", "Error");
+        return;
       } else {
-        // Auto operate if user enters extra operator when numTwo exists
-        const nextOperator = btnText;
-        lastResult = operate(numOne, numTwo, operator);
-        console.log(
-          "triggered by extra operator:\n" + `${numOne} ${operator} ${numTwo}`,
-        );
-        historyDisplayObj.updateDisplay();
-        if (isLastResultAnError) {
-          realTimeDisplayObj.clearDisplay();
-          realTimeDisplayObj.hideDisplay();
-          realTimeDisplayObj.setText("numOne", "Error");
-          return;
-        } else {
-          // start a new operation with lastResult as numOne, nextOperator as operator
-          numOne = lastResult;
-          operator = nextOperator;
-          lastResult = "";
-          numTwo = "";
-          realTimeDisplayObj.numTwo.classList.add("hidden");
-          realTimeDisplayObj.setText("numOne", numOne);
-        }
+        // start a new operation with lastResult as numOne, nextOperator as operator
+        numOne = lastResult;
+        operator = nextOperator;
+        lastResult = "";
+        numTwo = "";
+        realTimeDisplayObj.numTwo.classList.add("hidden");
+        realTimeDisplayObj.setText("numOne", numOne);
       }
-      realTimeDisplayObj.setText("operator", operator);
-      realTimeDisplayObj.removeHidden("operator");
     }
+    realTimeDisplayObj.setText("operator", operator);
+    realTimeDisplayObj.removeHidden("operator");
   });
 
   // Let user manually trigger the operating
@@ -225,7 +243,7 @@ function startCalculator() {
     // and it starts to exist, then operator absolutely exists
     // if operator exists, then numOne absolutely exists
     if (!numTwo || isLastResultAnError) return;
-    if (!(realTimeDisplayObj.numTwo.classList[1])) {
+    if (!realTimeDisplayObj.numTwo.classList[1]) {
       realTimeDisplayObj.hideDisplay();
     }
     lastResult = operate(numOne, numTwo, operator);
