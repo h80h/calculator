@@ -17,11 +17,11 @@ function startCalculator() {
   const historyDisplay = document.querySelector("#history");
   const allClear = document.querySelector("#all-clear");
 
-  // Declare numOne, numTwo, operator and lastResult which is target output
+  // Declare numOne, operator, numTwo and lastResult which is target output
   // that can determine whether to start a complete new operation or can be reused as numOne
   let numOne = "0";
-  let numTwo = "";
   let operator = "";
+  let numTwo = "";
   let lastResult = "";
   // Disable all event handler if isLastResultAnError is true except allClear's click event listener
   let isLastResultAnError = false;
@@ -129,11 +129,15 @@ function startCalculator() {
     return output;
   }
 
+  function resetLastResultAndNumTwo() {
+    lastResult = "";
+    numTwo = "";
+  }
+
   function resetAllVariables() {
     numOne = "0";
-    numTwo = "";
     operator = "";
-    lastResult = "";
+    resetLastResultAndNumTwo();
     isLastResultAnError = false;
     historyDisplayObj.clearAllDisplay();
     realTimeDisplayObj.clearDisplay();
@@ -201,8 +205,7 @@ function startCalculator() {
       // start a new operation with lastResult as numOne
       // and reset the lastResult, numTwo
       // and Reassign operator according to the clicked .operator
-      lastResult = "";
-      numTwo = "";
+      resetLastResultAndNumTwo();
       operator = btnText;
       historyDisplayObj.clearAllDisplay();
     } else if (!numTwo) {
@@ -226,8 +229,7 @@ function startCalculator() {
         // start a new operation with lastResult as numOne, nextOperator as operator
         numOne = lastResult;
         operator = nextOperator;
-        lastResult = "";
-        numTwo = "";
+        resetLastResultAndNumTwo();
         realTimeDisplayObj.numTwo.classList.add("hidden");
         realTimeDisplayObj.setText("numOne", numOne);
       }
