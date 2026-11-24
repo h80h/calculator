@@ -7,22 +7,6 @@ function roundNum(num, decimalPlace) {
   return Math.round(num * 10 ** decimalPlace) / 10 ** decimalPlace;
 }
 
-// Fix position issue of minus sign of negative number with rtl direction
-function moveMinusSign(num) {
-  // if (num < 0) {return `${num.slice(1)}-`;}
-  if (num < 0) {
-    return num.slice(1) + "-";
-  }
-  return num;
-}
-
-// Fix position issue of decimal point with rtl direction
-function moveDecimalPoint(num) {
-  return num.endsWith(".") 
-    ? "." + moveMinusSign(num.slice(0, -1)) 
-    : moveMinusSign(num);
-}
-
 function startCalculator() {
   const outerBtnsContainer = document.querySelector("#outer-btns-container");
   const operateSign = document.querySelector("#operate");
@@ -39,38 +23,45 @@ function startCalculator() {
   // Disable all event handler if isLastResultAnError is true except allClear's click event listener
   let isLastResultAnError = false;
 
-  const realTimeDisplayObj = new Display(realTimeDisplay);
-  const historyDisplayObj = new Display(historyDisplay);
-  realTimeDisplayObj.default = realTimeDisplay.querySelector(".default");
-
   function Display(part) {
     this.numOne = part.querySelector(".num-one");
     this.numTwo = part.querySelector(".num-two");
     this.operator = part.querySelector(".operator");
 
-    this.updateDisplay = function() {
-      this.numTwo.textContent = moveDecimalPoint(numTwo);
-      this.operator.textContent = moveDecimalPoint(operator);
-      this.numOne.textContent = moveDecimalPoint(numOne);
-    };
-
-    this.clearDisplay = function() {
-      this.operator.textContent = "";
-      this.numOne.textContent = "";
-    };
-
-    this.removeHidden = function(part) {
-      if (this[part].classList[1]) {
-        this[part].classList.remove("hidden");
-      }
-    };
-
-    this.addHidden = function(part) {
-      if (!this[part].classList[1]) {
-        this[part].classList.add("hidden");
-      }
+    this.setText = function (part, content) {
+      this[part].textContent = content;
     }
+    
+    this.updateDisplay = function () {
+      this.setText("numOne", numOne);
+      this.setText("operator", operator);
+      this.setText("numTwo", numTwo);
+    };
+
+    this.clearDisplay = function () {
+      this.setText("operator", "");
+      this.setText("numTwo", "");
+    };
   }
+
+  const realTimeDisplayObj = new Display(realTimeDisplay);
+  const historyDisplayObj = new Display(historyDisplay);
+  
+  realTimeDisplayObj.hideDisplay = function () {
+    this.operator.classList.add("hidden");
+    this.numTwo.classList.add("hidden");
+  };
+
+  realTimeDisplayObj.removeHidden = function (part) {
+    if (this[part].classList[1]) {
+      this[part].classList.remove("hidden");
+    }
+  };
+
+  historyDisplayObj.clearAllDisplay = function () {
+    this.clearDisplay();
+    this.setText("numOne", "");
+  };
 
   function operate(numOne, numTwo, operator) {
     const operation =
@@ -131,8 +122,7 @@ function startCalculator() {
     }
 
     console.log(`output: ${output}`);
-    console.log(`String(output): ${String(output)}`);
-    return String(output);
+    return output;
   }
 
   function resetAllVariables() {
@@ -141,13 +131,9 @@ function startCalculator() {
     operator = "";
     lastResult = "";
     isLastResultAnError = false;
+    historyDisplayObj.clearAllDisplay();
     realTimeDisplayObj.clearDisplay();
-    realTimeDisplayObj.numTwo.textContent = "";
-    realTimeDisplayObj.addHidden("numTwo");
-    realTimeDisplayObj.addHidden("operator");
-    realTimeDisplayObj.addHidden("numOne");
-    historyDisplayObj.clearDisplay();
-    historyDisplayObj.numTwo.textContent = "";
+    realTimeDisplayObj.hideDisplay();
     console.log("reset!");
   }
 
@@ -161,7 +147,6 @@ function startCalculator() {
       isLastResultAnError
     ) return;
 
-    realTimeDisplayObj.addHidden("default");
     const btn = e.target;
     const btnText = btn.textContent;
 
@@ -171,20 +156,19 @@ function startCalculator() {
       if (lastResult) resetAllVariables();
       if (!operator) {
         if (!numOne.includes(".") || btnText !== ".") {
-          realTimeDisplayObj.removeHidden("numOne");
           numOne === "0" && btnText !== "."
             ? (numOne = btnText)
             : (numOne += btnText);
         }
       } else {
         if (!numTwo.includes(".") || btnText !== ".") {
-        realTimeDisplayObj.removeHidden("numTwo");
           numTwo === "0" && btnText !== "."
             ? (numTwo = btnText)
             : numTwo === "" && btnText === "."
               ? (numTwo = "0.")
               : (numTwo += btnText);
         }
+        realTimeDisplayObj.removeHidden("numTwo");
       }
     } else {
       // If lastResult exists
@@ -198,14 +182,13 @@ function startCalculator() {
         lastResult = "";
         numTwo = "";
         operator = btnText;
-        realTimeDisplayObj.addHidden("numTwo");
-        historyDisplayObj.clearDisplay();
-        historyDisplayObj.numTwo.textContent = "";
-      } else if (!numTwo) {
-        realTimeDisplayObj.addHidden("numTwo");
-        realTimeDisplayObj.removeHidden("numOne");
+        historyDisplayObj.clearAllDisplay();
         realTimeDisplayObj.removeHidden("operator");
+      // this case explains why not to set "0" as numTwo's default value
+      // operator should be alterable before user enters numTwo
+      } else if (!numTwo) {
         operator = btnText;
+        realTimeDisplayObj.removeHidden("operator");
       } else {
         // Auto operate if user enters extra operator when numTwo exists
         const nextOperator = btnText;
@@ -216,15 +199,17 @@ function startCalculator() {
         historyDisplayObj.updateDisplay();
         if (isLastResultAnError) {
           realTimeDisplayObj.clearDisplay();
-          realTimeDisplayObj.numTwo.textContent = "Error";
+          realTimeDisplayObj.hideDisplay();
+          realTimeDisplayObj.setText("numOne", "Error");
         } else {
           // start a new operation with lastResult as numOne, nextOperator as operator
           numOne = lastResult;
           operator = nextOperator;
           lastResult = "";
           numTwo = "";
-          realTimeDisplayObj.updateDisplay();
-          realTimeDisplayObj.addHidden("numTwo");
+          realTimeDisplayObj.numTwo.classList.add("hidden");
+          realTimeDisplayObj.setText("numOne", numOne);
+          realTimeDisplayObj.setText("operator", operator);
         }
         return;
       }
@@ -239,11 +224,13 @@ function startCalculator() {
     // and it starts to exist, then operator absolutely exists
     // if operator exists, then numOne absolutely exists
     if (!numTwo || isLastResultAnError) return;
+    if (!(realTimeDisplayObj.numTwo.classList[1])) {
+      realTimeDisplayObj.hideDisplay();
+    }
     lastResult = operate(numOne, numTwo, operator);
     console.log("triggered by user:\n" + `${numOne} ${operator} ${numTwo}`);
-    realTimeDisplayObj.clearDisplay();
-    realTimeDisplayObj.numTwo.textContent = moveMinusSign(lastResult);
     historyDisplayObj.updateDisplay();
+    realTimeDisplayObj.setText("numOne", lastResult);
     // start a new operation with lastResult as numOne
     if (!isLastResultAnError) numOne = lastResult;
   });
@@ -251,7 +238,7 @@ function startCalculator() {
   // Make the whole calculator reset
   allClear.addEventListener("click", () => {
     resetAllVariables();
-    realTimeDisplayObj.removeHidden("default");
+    realTimeDisplayObj.setText("numOne", "0");
     console.log("Restart from 0");
   });
 }

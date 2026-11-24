@@ -56,10 +56,9 @@ body {
 }
 
 #history, #real-time {
-  white-space: nowrap;
   overflow: hidden;
-  direction: rtl;
   display: flex;
+  flex-direction: row-reverse;
 }
 
 #history {
