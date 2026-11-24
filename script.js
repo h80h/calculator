@@ -31,12 +31,6 @@ function startCalculator() {
     this.setText = function (part, content) {
       this[part].textContent = content;
     }
-    
-    this.updateDisplay = function () {
-      this.setText("numOne", numOne);
-      this.setText("operator", operator);
-      this.setText("numTwo", numTwo);
-    };
 
     this.clearDisplay = function () {
       this.setText("operator", "");
@@ -46,16 +40,23 @@ function startCalculator() {
 
   const realTimeDisplayObj = new Display(realTimeDisplay);
   const historyDisplayObj = new Display(historyDisplay);
-  
+
+  realTimeDisplayObj.removeHidden = function (part) {
+    if (this[part].classList[1]) {
+      this[part].classList.remove("hidden");
+      console.log(`remove hidden from ${part}`)
+    }
+  };
+
   realTimeDisplayObj.hideDisplay = function () {
     this.operator.classList.add("hidden");
     this.numTwo.classList.add("hidden");
   };
 
-  realTimeDisplayObj.removeHidden = function (part) {
-    if (this[part].classList[1]) {
-      this[part].classList.remove("hidden");
-    }
+  historyDisplayObj.updateDisplay = function () {
+    this.setText("numOne", numOne);
+    this.setText("operator", operator);
+    this.setText("numTwo", numTwo);
   };
 
   historyDisplayObj.clearAllDisplay = function () {
@@ -159,6 +160,7 @@ function startCalculator() {
           numOne === "0" && btnText !== "."
             ? (numOne = btnText)
             : (numOne += btnText);
+          realTimeDisplayObj.setText("numOne", numOne);
         }
       } else {
         if (!numTwo.includes(".") || btnText !== ".") {
@@ -167,8 +169,9 @@ function startCalculator() {
             : numTwo === "" && btnText === "."
               ? (numTwo = "0.")
               : (numTwo += btnText);
+          realTimeDisplayObj.setText("numTwo", numTwo);
+          realTimeDisplayObj.removeHidden("numTwo");
         }
-        realTimeDisplayObj.removeHidden("numTwo");
       }
     } else {
       // If lastResult exists
@@ -183,12 +186,10 @@ function startCalculator() {
         numTwo = "";
         operator = btnText;
         historyDisplayObj.clearAllDisplay();
-        realTimeDisplayObj.removeHidden("operator");
       // this case explains why not to set "0" as numTwo's default value
       // operator should be alterable before user enters numTwo
       } else if (!numTwo) {
         operator = btnText;
-        realTimeDisplayObj.removeHidden("operator");
       } else {
         // Auto operate if user enters extra operator when numTwo exists
         const nextOperator = btnText;
@@ -201,6 +202,7 @@ function startCalculator() {
           realTimeDisplayObj.clearDisplay();
           realTimeDisplayObj.hideDisplay();
           realTimeDisplayObj.setText("numOne", "Error");
+          return;
         } else {
           // start a new operation with lastResult as numOne, nextOperator as operator
           numOne = lastResult;
@@ -209,12 +211,11 @@ function startCalculator() {
           numTwo = "";
           realTimeDisplayObj.numTwo.classList.add("hidden");
           realTimeDisplayObj.setText("numOne", numOne);
-          realTimeDisplayObj.setText("operator", operator);
         }
-        return;
       }
+      realTimeDisplayObj.setText("operator", operator);
+      realTimeDisplayObj.removeHidden("operator");
     }
-    realTimeDisplayObj.updateDisplay();
   });
 
   // Let user manually trigger the operating
