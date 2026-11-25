@@ -8,14 +8,13 @@ function roundNum(num, decimalPlace) {
 }
 
 function startCalculator() {
-  const operandsContainer = document.querySelector(
-    "#outer-btns-container>div:first-child",
-  );
+  const operandsContainer = document.querySelector("#outer-btns-container>div:first-child");
   const operatorsContainer = document.querySelector("#operators-container");
   const operateSign = document.querySelector("#operate");
   const realTimeDisplay = document.querySelector("#real-time");
   const historyDisplay = document.querySelector("#history");
   const allClear = document.querySelector("#all-clear");
+  const negation = document.querySelector("#negation")
 
   // Declare numOne, operator, numTwo and lastResult which is target output
   // that can determine whether to start a complete new operation or can be reused as numOne
@@ -126,7 +125,7 @@ function startCalculator() {
     }
 
     console.log(`output: ${output}`);
-    return output;
+    return String(output);
   }
 
   function resetLastResultAndNumTwo() {
@@ -147,7 +146,7 @@ function startCalculator() {
 
   // Let user input operation which is formed by numOne, numTwo and operator
   // Create two event listeners for readability
-  // One for operands, one for operator
+  // This for operands, next for operator
   operandsContainer.addEventListener("click", (e) => {
     if (
       e.target === operandsContainer ||
@@ -162,24 +161,77 @@ function startCalculator() {
 
     // if clicking digit buttons right after operating
     // start a new operation with all variables being reset
-    if (lastResult) resetAllVariables();
+    // else if it's the negation button being clicked
+    // use lastResult as numOne which was set after clicking operateSign
+    // and reset other variables of operation and clear history
+    if (lastResult) {
+      if (btn !== negation) {
+        resetAllVariables();
+      } else {
+        operator = "";
+        resetLastResultAndNumTwo();
+        historyDisplayObj.clearAllDisplay();
+      }
+    }
+
+    function Operand(name, value) {
+      this.name = name;
+      this.value = value;
+      this.define = function (concatDigit, assignValue, removeHidden) {
+        if (!this.value.includes(".") || btnText !== ".") {
+          // Operand can be negate while being defined
+          if (btn === negation) {
+            // this case explains why not to set "0" as numTwo's default value
+            if (this.value && this.value !== "0") {
+              if (this.value[0] !== "-") {
+                this.value = "-" + this.value;
+              } else {
+                this.value = this.value.slice(1);
+              }
+              assignValue(this);
+              console.log(`negate ${this.name}!`);
+            } else return;
+          } else {
+            concatDigit(this);
+          }
+          if (this.value[0] === "-") {
+            this.value = `(${this.value})`;
+          }
+          console.log(`${this.name}: ${this.value}`);
+          realTimeDisplayObj.setText(this.name, this.value);
+          if (removeHidden) removeHidden(this);
+        }
+      };
+    }
+    // numOne can be defined before operand doesn't exist
+    // numTwo can be defined before a new triggered operating
     if (!operator) {
-      if (!numOne.includes(".") || btnText !== ".") {
-        numOne === "0" && btnText !== "."
-          ? (numOne = btnText)
-          : (numOne += btnText);
-        realTimeDisplayObj.setText("numOne", numOne);
-      }
+      const numOneObj = new Operand("numOne", numOne);
+      numOneObj.define(
+        (operand) => {
+          numOne === "0" && btnText !== "."
+            ? (numOne = btnText)
+            : (numOne += btnText);
+          operand.value = numOne;
+        },
+        (operand) => (numOne = operand.value),
+      );
     } else {
-      if (!numTwo.includes(".") || btnText !== ".") {
-        numTwo === "0" && btnText !== "."
-          ? (numTwo = btnText)
-          : numTwo === "" && btnText === "."
-            ? (numTwo = "0.")
-            : (numTwo += btnText);
-        realTimeDisplayObj.setText("numTwo", numTwo);
-        realTimeDisplayObj.removeHidden("numTwo");
-      }
+      const numTwoObj = new Operand("numTwo", numTwo);
+      numTwoObj.define(
+        (operand) => {
+          numTwo === "0" && btnText !== "."
+            ? (numTwo = btnText)
+            : numTwo === "" && btnText === "."
+              ? (numTwo = "0.")
+              : (numTwo += btnText);
+          operand.value = numTwo;
+        },
+        (operand) => (numTwo = operand.value),
+        (operand) => {
+          realTimeDisplayObj.removeHidden(operand.name);
+        },
+      );
     }
   });
 
@@ -204,7 +256,7 @@ function startCalculator() {
       operator = btnText;
       historyDisplayObj.clearAllDisplay();
     } else if (!numTwo) {
-      // this case explains why not to set "0" as numTwo's default value
+      // this case also explains why not to set "0" as numTwo's default value
       // operator should be alterable before user enters numTwo
       operator = btnText;
     } else {
