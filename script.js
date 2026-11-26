@@ -8,13 +8,16 @@ function roundNum(num, decimalPlace) {
 }
 
 function startCalculator() {
-  const operandsContainer = document.querySelector("#outer-btns-container>div:first-child");
+  const operandsContainer = document.querySelector(
+    "#outer-btns-container>div:first-child",
+  );
   const operatorsContainer = document.querySelector("#operators-container");
   const operateSign = document.querySelector("#operate");
   const realTimeDisplay = document.querySelector("#real-time");
   const historyDisplay = document.querySelector("#history");
   const allClear = document.querySelector("#all-clear");
-  const negation = document.querySelector("#negation")
+  const negation = document.querySelector("#negation");
+  const percent = document.querySelector("#percent");
 
   // Declare numOne, operator, numTwo and lastResult which is target output
   // that can determine whether to start a complete new operation or can be reused as numOne
@@ -24,6 +27,112 @@ function startCalculator() {
   let lastResult = "";
   // Disable all event handler if isLastResultAnError is true except allClear's click event listener
   let isLastResultAnError = false;
+  let btn;
+  let btnText;
+
+  function Operand(name, value) {
+    this.name = name;
+    // without percent sign attached
+    this.value = value;
+    this.displayedValue = "";
+    this.hasPercent = 0;
+    this.define = function (removeHidden) {
+      if (!this.value.includes(".") || btnText !== ".") {
+        // Operand can be negate while being defined
+        if (btn === negation) {
+          // this case explains why not to set "0" as numTwo's default value
+          if (this.value && this.value !== "0") {
+            if (this.value[0] !== "-") {
+              this.value = "-" + this.value;
+            } else {
+              this.value = this.value.slice(1);
+            }
+            console.log(`negate ${this.name}`);
+          } else return;
+        } else if (btn === percent) {
+          if (this.value) {
+            if (!this.hasPercent) {
+              const currentDisplay = realTimeDisplayObj[this.name].textContent;
+              this.displayedValue = `${currentDisplay}%`;
+            } else {
+              this.displayedValue = `${this.displayedValue}%`;
+            }
+            // console log "%" weirdly, but log normal with alert
+            // alert(`new this.displayedValue: ${this.displayedValue}`);
+            this.hasPercent++;
+            console.log(`add percent to ${this.name}`);
+          } else return;
+        } else {
+          this.concatDigit();
+          if (removeHidden) removeHidden(this);
+        }
+
+        if (btn === negation) {
+          if (this.value[0] === "-") {
+            this.displayedValue = `(${this.value})`;
+          } else {
+            this.displayedValue = this.value;
+          }
+
+          if (this.hasPercent && this.displayedValue.slice(0, 2) !== "0%") {
+            this.displayedValue = `${this.displayedValue}${"%".repeat(this.hasPercent)}`;
+          }
+        }
+
+        // if this.value equals to 0, don't set text
+        realTimeDisplayObj.setText(
+          this.name,
+          this.displayedValue || this.value,
+        );
+        console.log(`${this.name}: ${this.value}`);
+        console.log("setText");
+      }
+    };
+
+    this.reset = function () {
+      this.value = "";
+      this.hasPercent = 0;
+      this.displayedValue = "";
+    };
+  }
+
+  const numOneObj = new Operand("numOne", numOne);
+  const numTwoObj = new Operand("numTwo", numTwo);
+
+  numOneObj.concatDigit = function () {
+    if (this.value === "0") {
+      if (btnText === "0") {
+        console.log("do nothing");
+        return;
+      } else if (btnText === ".") {
+        this.value = "0.";
+      } else {
+        this.value = btnText;
+      }
+    } else {
+      this.value += btnText;
+    }
+  };
+
+  numTwoObj.concatDigit = function () {
+    if (this.value === "") {
+      if (btnText === ".") {
+        this.value = "0.";
+      } else {
+        this.value += btnText;
+      }
+    } else if (this.value === "0") {
+      if (btnText === "0") {
+        return;
+      } else if (btnText === ".") {
+        this.value = "0.";
+      } else {
+        this.value = btnText;
+      }
+    } else {
+      this.value += btnText;
+    }
+  };
 
   function Display(part) {
     this.numOne = part.querySelector(".num-one");
@@ -56,15 +165,31 @@ function startCalculator() {
   };
 
   historyDisplayObj.updateDisplay = function () {
-    this.setText("numOne", numOne);
+    this.setText("numOne", numOneObj.displayedValue || numOne);
     this.setText("operator", operator);
-    this.setText("numTwo", numTwo);
+    this.setText("numTwo", numTwoObj.displayedValue || numTwo);
+    numOneObj.reset();
   };
 
   historyDisplayObj.clearAllDisplay = function () {
     this.clearDisplay();
     this.setText("numOne", "");
   };
+
+  function setFinalOperands() {
+    console.log(`numOne: ${numOne}`);
+    console.log(`numOneObj.value: ${numOneObj.value}`);
+    console.log(`numTwo: ${numTwo}`);
+    console.log(`numTwoObj.value: ${numTwoObj.value}`);
+    numOne = numOneObj.value;
+    numTwo = numTwoObj.value;
+    if (numOneObj.hasPercent) {
+      numOne /= 100 ** numOneObj.hasPercent;
+    }
+    if (numTwoObj.hasPercent) {
+      numTwo /= 100 ** numTwoObj.hasPercent;
+    }
+  }
 
   function operate(numOne, numTwo, operator) {
     const operation =
@@ -82,6 +207,7 @@ function startCalculator() {
       isLastResultAnError = true;
       return "Error";
     }
+    
     const result = operation(numOne, numTwo);
     const resultStr = String(result);
     console.log(`result: ${result}`);
@@ -125,12 +251,21 @@ function startCalculator() {
     }
 
     console.log(`output: ${output}`);
+    console.log(`numOneObj.displayedValue: ${numOneObj.displayedValue}`);
+    console.log(`numTwoObj.displayedValue: ${numTwoObj.displayedValue}`);
     return String(output);
   }
 
   function resetLastResultAndNumTwo() {
     lastResult = "";
     numTwo = "";
+    numTwoObj.reset();
+    realTimeDisplayObj.setText("numTwo", "");
+  }
+
+  function setLastResultAsNumOne() {
+    numOne = lastResult;
+    numOneObj.value = lastResult;
   }
 
   function resetAllVariables() {
@@ -138,6 +273,8 @@ function startCalculator() {
     operator = "";
     resetLastResultAndNumTwo();
     isLastResultAnError = false;
+    numOneObj.reset();
+    numOneObj.value = "0";
     historyDisplayObj.clearAllDisplay();
     realTimeDisplayObj.clearDisplay();
     realTimeDisplayObj.hideDisplay();
@@ -156,8 +293,8 @@ function startCalculator() {
     )
       return;
 
-    const btn = e.target;
-    const btnText = btn.textContent;
+    btn = e.target;
+    btnText = btn.textContent;
 
     // if clicking digit buttons right after operating
     // start a new operation with all variables being reset
@@ -165,7 +302,7 @@ function startCalculator() {
     // use lastResult as numOne which was set after clicking operateSign
     // and reset other variables of operation and clear history
     if (lastResult) {
-      if (btn !== negation) {
+      if (btn !== negation && btn !== percent) {
         resetAllVariables();
       } else {
         operator = "";
@@ -174,61 +311,12 @@ function startCalculator() {
       }
     }
 
-    function Operand(name, value) {
-      this.name = name;
-      this.value = value;
-      this.define = function (concatDigit, assignValue, removeHidden) {
-        if (!this.value.includes(".") || btnText !== ".") {
-          // Operand can be negate while being defined
-          if (btn === negation) {
-            // this case explains why not to set "0" as numTwo's default value
-            if (this.value && this.value !== "0") {
-              if (this.value[0] !== "-") {
-                this.value = "-" + this.value;
-              } else {
-                this.value = this.value.slice(1);
-              }
-              assignValue(this);
-              console.log(`negate ${this.name}!`);
-            } else return;
-          } else {
-            concatDigit(this);
-          }
-          if (this.value[0] === "-") {
-            this.value = `(${this.value})`;
-          }
-          console.log(`${this.name}: ${this.value}`);
-          realTimeDisplayObj.setText(this.name, this.value);
-          if (removeHidden) removeHidden(this);
-        }
-      };
-    }
     // numOne can be defined before operand doesn't exist
     // numTwo can be defined before a new triggered operating
     if (!operator) {
-      const numOneObj = new Operand("numOne", numOne);
-      numOneObj.define(
-        (operand) => {
-          numOne === "0" && btnText !== "."
-            ? (numOne = btnText)
-            : (numOne += btnText);
-          operand.value = numOne;
-        },
-        (operand) => (numOne = operand.value),
-      );
+      numOneObj.define();
     } else {
-      const numTwoObj = new Operand("numTwo", numTwo);
-      numTwoObj.define(
-        (operand) => {
-          numTwo === "0" && btnText !== "."
-            ? (numTwo = btnText)
-            : numTwo === "" && btnText === "."
-              ? (numTwo = "0.")
-              : (numTwo += btnText);
-          operand.value = numTwo;
-        },
-        (operand) => (numTwo = operand.value),
-        (operand) => {
+      numTwoObj.define((operand) => {
           realTimeDisplayObj.removeHidden(operand.name);
         },
       );
@@ -255,13 +343,16 @@ function startCalculator() {
       resetLastResultAndNumTwo();
       operator = btnText;
       historyDisplayObj.clearAllDisplay();
-    } else if (!numTwo) {
+    } else if (!numTwoObj.value) {
       // this case also explains why not to set "0" as numTwo's default value
       // operator should be alterable before user enters numTwo
       operator = btnText;
+      console.log(`numOne: ${numOne}`);
+      console.log(`numOneObj.value: ${numOneObj.value}`);
     } else {
       // Auto operate if user enters extra operator when numTwo exists
       const nextOperator = btnText;
+      setFinalOperands();
       lastResult = operate(numOne, numTwo, operator);
       console.log(
         "triggered by extra operator:\n" + `${numOne} ${operator} ${numTwo}`,
@@ -274,9 +365,10 @@ function startCalculator() {
         return;
       } else {
         // start a new operation with lastResult as numOne, nextOperator as operator
-        numOne = lastResult;
+        setLastResultAsNumOne();
         operator = nextOperator;
         resetLastResultAndNumTwo();
+        numTwoObj.reset();
         realTimeDisplayObj.numTwo.classList.add("hidden");
         realTimeDisplayObj.setText("numOne", numOne);
       }
@@ -291,16 +383,17 @@ function startCalculator() {
     // if numTwo is set to be some value according to which digit button got pressed
     // and it starts to exist, then operator absolutely exists
     // if operator exists, then numOne absolutely exists
-    if (!numTwo || isLastResultAnError) return;
+    if (!numTwoObj.value || isLastResultAnError) return;
     if (!realTimeDisplayObj.numTwo.classList[1]) {
       realTimeDisplayObj.hideDisplay();
     }
+    if (numOneObj.value) setFinalOperands();
     lastResult = operate(numOne, numTwo, operator);
     console.log("triggered by user:\n" + `${numOne} ${operator} ${numTwo}`);
     historyDisplayObj.updateDisplay();
     realTimeDisplayObj.setText("numOne", lastResult);
     // start a new operation with lastResult as numOne
-    if (!isLastResultAnError) numOne = lastResult;
+    if (!isLastResultAnError) setLastResultAsNumOne();
   });
 
   // Make the whole calculator reset
