@@ -20,7 +20,7 @@ function startCalculator() {
   const percent = document.querySelector("#percent");
 
   // Declare numOne, operator, numTwo and lastResult which is target output
-  // that can determine whether to start a complete new operation or can be reused as numOne
+  // that can determine whether to start a complete new operation and can be reused as numOne
   let numOne = "0";
   let operator = "";
   let numTwo = "";
@@ -32,13 +32,29 @@ function startCalculator() {
 
   function Operand(name, value) {
     this.name = name;
-    // without percent sign attached
+    // value of operand without percent sign attached
     this.value = value;
     this.displayedValue = "";
     this.hasPercent = 0;
-    this.define = function (removeHidden) {
+    this.concatDigitBase = function () {
+      if (this.value === "0") {
+        if (btnText === "0") {
+          console.log("do nothing");
+          return;
+        } else if (btnText === ".") {
+          this.value = "0.";
+        } else {
+          this.value = btnText;
+        }
+      } else {
+        this.value += btnText;
+      }
+    };
+    
+    this.define = function () {
       if (!this.value.includes(".") || btnText !== ".") {
-        // Operand can be negate while being defined
+        // Operand can be negated and added percent sign while being defined
+        // this part decide the raw value before attaching percent sign and parentheses for negative
         if (btn === negation) {
           // this case explains why not to set "0" as numTwo's default value
           if (this.value && this.value !== "0") {
@@ -51,41 +67,30 @@ function startCalculator() {
           } else return;
         } else if (btn === percent) {
           if (this.value) {
-            if (!this.hasPercent) {
-              const currentDisplay = realTimeDisplayObj[this.name].textContent;
-              this.displayedValue = `${currentDisplay}%`;
-            } else {
-              this.displayedValue = `${this.displayedValue}%`;
-            }
-            // console log "%" weirdly, but log normal with alert
-            // alert(`new this.displayedValue: ${this.displayedValue}`);
             this.hasPercent++;
             console.log(`add percent to ${this.name}`);
           } else return;
         } else {
-          this.concatDigit();
-          if (removeHidden) removeHidden(this);
+          if (!this.hasPercent) {
+            this.concatDigit();
+            if (this.value === "0" && !this.hasPercent) return;
+            if (this.value === "add 0") this.value = "0";
+          } else return;
         }
 
-        if (btn === negation) {
-          if (this.value[0] === "-") {
-            this.displayedValue = `(${this.value})`;
-          } else {
-            this.displayedValue = this.value;
-          }
-
-          if (this.hasPercent && this.displayedValue.slice(0, 2) !== "0%") {
-            this.displayedValue = `${this.displayedValue}${"%".repeat(this.hasPercent)}`;
-          }
+        // this part decide the final look to display
+        if (this.value[0] === "-") {
+          this.displayedValue = `(${this.value})`;
+        } else {
+          this.displayedValue = this.value;
         }
-
-        // if this.value equals to 0, don't set text
-        realTimeDisplayObj.setText(
-          this.name,
-          this.displayedValue || this.value,
+        console.log(
+          `set ${this.name} to ${this.displayedValue} (${this.hasPercent} * %)`,
         );
-        console.log(`${this.name}: ${this.value}`);
-        console.log("setText");
+        if (this.hasPercent) {
+          this.displayedValue = `${this.displayedValue}${"%".repeat(this.hasPercent)}`;
+        }
+        realTimeDisplayObj.setText(this.name, this.displayedValue);
       }
     };
 
@@ -96,42 +101,22 @@ function startCalculator() {
     };
   }
 
+  // Declare operand obj for numOne & numTwo 
+  // to edit the value and how it looks on display for each user interaction
   const numOneObj = new Operand("numOne", numOne);
   const numTwoObj = new Operand("numTwo", numTwo);
 
-  numOneObj.concatDigit = function () {
-    if (this.value === "0") {
-      if (btnText === "0") {
-        console.log("do nothing");
-        return;
-      } else if (btnText === ".") {
-        this.value = "0.";
-      } else {
-        this.value = btnText;
-      }
-    } else {
-      this.value += btnText;
-    }
-  };
-
+  numOneObj.concatDigit = numOneObj.concatDigitBase;
   numTwoObj.concatDigit = function () {
     if (this.value === "") {
       if (btnText === ".") {
         this.value = "0.";
+      } else if (btnText === "0") {
+        this.value = "add 0";
       } else {
         this.value += btnText;
       }
-    } else if (this.value === "0") {
-      if (btnText === "0") {
-        return;
-      } else if (btnText === ".") {
-        this.value = "0.";
-      } else {
-        this.value = btnText;
-      }
-    } else {
-      this.value += btnText;
-    }
+    } else numTwoObj.concatDigitBase();
   };
 
   function Display(part) {
@@ -149,14 +134,13 @@ function startCalculator() {
     };
   }
 
+  // Declare these two parts of display for real-time operation update and history of last operation
   const realTimeDisplayObj = new Display(realTimeDisplay);
   const historyDisplayObj = new Display(historyDisplay);
 
   realTimeDisplayObj.removeHidden = function (part) {
-    if (this[part].classList[1]) {
-      this[part].classList.remove("hidden");
-      console.log(`remove hidden from ${part}`);
-    }
+    this[part].classList.remove("hidden");
+    console.log(`remove hidden from ${part}`);
   };
 
   realTimeDisplayObj.hideDisplay = function () {
@@ -167,7 +151,8 @@ function startCalculator() {
   historyDisplayObj.updateDisplay = function () {
     this.setText("numOne", numOneObj.displayedValue || numOne);
     this.setText("operator", operator);
-    this.setText("numTwo", numTwoObj.displayedValue || numTwo);
+    // numTwo must be edited before operating
+    this.setText("numTwo", numTwoObj.displayedValue);
     numOneObj.reset();
   };
 
@@ -181,13 +166,19 @@ function startCalculator() {
     console.log(`numOneObj.value: ${numOneObj.value}`);
     console.log(`numTwo: ${numTwo}`);
     console.log(`numTwoObj.value: ${numTwoObj.value}`);
-    numOne = numOneObj.value;
-    numTwo = numTwoObj.value;
-    if (numOneObj.hasPercent) {
-      numOne /= 100 ** numOneObj.hasPercent;
+    if (numOneObj.value != 0) {
+      numOne = numOneObj.value;
+      if (numOneObj.hasPercent) {
+        numOne /= 100 ** numOneObj.hasPercent;
+      }
     }
-    if (numTwoObj.hasPercent) {
-      numTwo /= 100 ** numTwoObj.hasPercent;
+    
+    if (numTwo === 0 || numTwo === "0") return;
+    else {
+      numTwo = numTwoObj.value;
+      if (numTwoObj.hasPercent) {
+        numTwo /= 100 ** numTwoObj.hasPercent;
+      }
     }
   }
 
@@ -251,8 +242,6 @@ function startCalculator() {
     }
 
     console.log(`output: ${output}`);
-    console.log(`numOneObj.displayedValue: ${numOneObj.displayedValue}`);
-    console.log(`numTwoObj.displayedValue: ${numTwoObj.displayedValue}`);
     return String(output);
   }
 
@@ -278,6 +267,7 @@ function startCalculator() {
     historyDisplayObj.clearAllDisplay();
     realTimeDisplayObj.clearDisplay();
     realTimeDisplayObj.hideDisplay();
+    realTimeDisplayObj.setText("numOne", "0");
     console.log("reset!");
   }
 
@@ -316,10 +306,10 @@ function startCalculator() {
     if (!operator) {
       numOneObj.define();
     } else {
-      numTwoObj.define((operand) => {
-          realTimeDisplayObj.removeHidden(operand.name);
-        },
-      );
+      numTwoObj.define();
+      if (numTwoObj.value) {
+        realTimeDisplayObj.removeHidden("numTwo");
+      }
     }
   });
 
@@ -359,7 +349,6 @@ function startCalculator() {
       );
       historyDisplayObj.updateDisplay();
       if (isLastResultAnError) {
-        realTimeDisplayObj.clearDisplay();
         realTimeDisplayObj.hideDisplay();
         realTimeDisplayObj.setText("numOne", "Error");
         return;
@@ -368,7 +357,6 @@ function startCalculator() {
         setLastResultAsNumOne();
         operator = nextOperator;
         resetLastResultAndNumTwo();
-        numTwoObj.reset();
         realTimeDisplayObj.numTwo.classList.add("hidden");
         realTimeDisplayObj.setText("numOne", numOne);
       }
@@ -384,22 +372,19 @@ function startCalculator() {
     // and it starts to exist, then operator absolutely exists
     // if operator exists, then numOne absolutely exists
     if (!numTwoObj.value || isLastResultAnError) return;
-    if (!realTimeDisplayObj.numTwo.classList[1]) {
-      realTimeDisplayObj.hideDisplay();
-    }
-    if (numOneObj.value) setFinalOperands();
+    realTimeDisplayObj.hideDisplay();
+    setFinalOperands();
     lastResult = operate(numOne, numTwo, operator);
     console.log("triggered by user:\n" + `${numOne} ${operator} ${numTwo}`);
     historyDisplayObj.updateDisplay();
     realTimeDisplayObj.setText("numOne", lastResult);
     // start a new operation with lastResult as numOne
-    if (!isLastResultAnError) setLastResultAsNumOne();
+    setLastResultAsNumOne();
   });
 
   // Make the whole calculator reset
   allClear.addEventListener("click", () => {
     resetAllVariables();
-    realTimeDisplayObj.setText("numOne", "0");
     console.log("Restart from 0");
   });
 }
